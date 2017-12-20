@@ -19,8 +19,8 @@
 #include "src/core/ext/transport/chttp2/transport/internal.h"
 
 #include <grpc/support/log.h>
-
-static char *stream_list_id_string(grpc_chttp2_stream_list_id id) {
+//Julian
+static char const *stream_list_id_string(grpc_chttp2_stream_list_id id) {
   switch (id) {
     case GRPC_CHTTP2_LIST_WRITABLE:
       return "writable";

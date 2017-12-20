@@ -48,7 +48,19 @@ int grpc_server_add_secure_http2_port(grpc_server *server, const char *addr,
   if (creds == NULL) {
     err = GRPC_ERROR_CREATE_FROM_STATIC_STRING(
         "No credentials specified for secure server port (creds==NULL)");
-    goto done;
+    //goto done;
+// Julian
+  if (sc != NULL) {
+    GRPC_SECURITY_CONNECTOR_UNREF(&exec_ctx, &sc->base, "server");
+  }
+  grpc_exec_ctx_finish(&exec_ctx);
+  if (err != GRPC_ERROR_NONE) {
+    const char *msg = grpc_error_string(err);
+    gpr_log(GPR_ERROR, "%s", msg);
+
+    GRPC_ERROR_UNREF(err);
+  }
+  return port_num;
   }
   grpc_security_status status =
       grpc_server_credentials_create_security_connector(&exec_ctx, creds, &sc);
@@ -60,7 +72,19 @@ int grpc_server_add_secure_http2_port(grpc_server *server, const char *addr,
     err = grpc_error_set_int(GRPC_ERROR_CREATE_FROM_COPIED_STRING(msg),
                              GRPC_ERROR_INT_SECURITY_STATUS, status);
     gpr_free(msg);
-    goto done;
+    //goto done;
+// Julian
+  if (sc != NULL) {
+    GRPC_SECURITY_CONNECTOR_UNREF(&exec_ctx, &sc->base, "server");
+  }
+  grpc_exec_ctx_finish(&exec_ctx);
+  if (err != GRPC_ERROR_NONE) {
+    const char *msg = grpc_error_string(err);
+    gpr_log(GPR_ERROR, "%s", msg);
+
+    GRPC_ERROR_UNREF(err);
+  }
+  return port_num;
   }
   // Create channel args.
   grpc_arg args_to_add[2];
@@ -71,7 +95,7 @@ int grpc_server_add_secure_http2_port(grpc_server *server, const char *addr,
                                      args_to_add, GPR_ARRAY_SIZE(args_to_add));
   // Add server port.
   err = grpc_chttp2_server_add_port(&exec_ctx, server, addr, args, &port_num);
-done:
+//Julian
   if (sc != NULL) {
     GRPC_SECURITY_CONNECTOR_UNREF(&exec_ctx, &sc->base, "server");
   }

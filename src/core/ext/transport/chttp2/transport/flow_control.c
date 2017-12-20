@@ -127,8 +127,8 @@ static void posttrace(shadow_flow_control* shadow_fc,
   gpr_free(slw_str);
   gpr_free(saw_str);
 }
-
-static char* urgency_to_string(grpc_chttp2_flowctl_urgency urgency) {
+//Julian
+static char const* urgency_to_string(grpc_chttp2_flowctl_urgency urgency) {
   switch (urgency) {
     case GRPC_CHTTP2_FLOWCTL_NO_ACTION_NEEDED:
       return "no action";

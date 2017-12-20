@@ -129,7 +129,7 @@ static void jose_header_destroy(grpc_exec_ctx *exec_ctx, jose_header *h) {
 static jose_header *jose_header_from_json(grpc_exec_ctx *exec_ctx,
                                           grpc_json *json, grpc_slice buffer) {
   grpc_json *cur;
-  jose_header *h = gpr_zalloc(sizeof(jose_header));
+  jose_header *h = (jose_header *)gpr_zalloc(sizeof(jose_header));
   h->buffer = buffer;
   for (cur = json->child; cur != NULL; cur = cur->next) {
     if (strcmp(cur->key, "alg") == 0) {
@@ -231,7 +231,7 @@ gpr_timespec grpc_jwt_claims_not_before(const grpc_jwt_claims *claims) {
 grpc_jwt_claims *grpc_jwt_claims_from_json(grpc_exec_ctx *exec_ctx,
                                            grpc_json *json, grpc_slice buffer) {
   grpc_json *cur;
-  grpc_jwt_claims *claims = gpr_malloc(sizeof(grpc_jwt_claims));
+  grpc_jwt_claims *claims = (grpc_jwt_claims *)gpr_malloc(sizeof(grpc_jwt_claims));
   memset(claims, 0, sizeof(grpc_jwt_claims));
   claims->json = json;
   claims->buffer = buffer;
@@ -347,7 +347,7 @@ static verifier_cb_ctx *verifier_cb_ctx_create(
     const char *signed_jwt, size_t signed_jwt_len, void *user_data,
     grpc_jwt_verification_done_cb cb) {
   grpc_exec_ctx exec_ctx = GRPC_EXEC_CTX_INIT;
-  verifier_cb_ctx *ctx = gpr_zalloc(sizeof(verifier_cb_ctx));
+  verifier_cb_ctx *ctx = (verifier_cb_ctx *)gpr_zalloc(sizeof(verifier_cb_ctx));
   ctx->verifier = verifier;
   ctx->pollent = grpc_polling_entity_create_from_pollset(pollset);
   ctx->header = header;
@@ -678,24 +678,40 @@ static void on_openid_config_retrieved(grpc_exec_ctx *exec_ctx, void *user_data,
   const char *jwks_uri;
 
   /* TODO(jboeuf): Cache the jwks_uri in order to avoid this hop next time. */
-  if (json == NULL) goto error;
+  if (json == NULL) {
+  if (json != NULL) grpc_json_destroy(json);
+  ctx->user_cb(exec_ctx, ctx->user_data, GRPC_JWT_VERIFIER_KEY_RETRIEVAL_ERROR,
+               NULL);
+  verifier_cb_ctx_destroy(exec_ctx, ctx);
+  }
   cur = find_property_by_name(json, "jwks_uri");
   if (cur == NULL) {
     gpr_log(GPR_ERROR, "Could not find jwks_uri in openid config.");
-    goto error;
+  if (json != NULL) grpc_json_destroy(json);
+  ctx->user_cb(exec_ctx, ctx->user_data, GRPC_JWT_VERIFIER_KEY_RETRIEVAL_ERROR,
+               NULL);
+  verifier_cb_ctx_destroy(exec_ctx, ctx);
   }
   jwks_uri = validate_string_field(cur, "jwks_uri");
-  if (jwks_uri == NULL) goto error;
+  if (jwks_uri == NULL) {
+  if (json != NULL) grpc_json_destroy(json);
+  ctx->user_cb(exec_ctx, ctx->user_data, GRPC_JWT_VERIFIER_KEY_RETRIEVAL_ERROR,
+               NULL);
+  verifier_cb_ctx_destroy(exec_ctx, ctx);
+  }
   if (strstr(jwks_uri, "https://") != jwks_uri) {
     gpr_log(GPR_ERROR, "Invalid non https jwks_uri: %s.", jwks_uri);
-    goto error;
+  if (json != NULL) grpc_json_destroy(json);
+  ctx->user_cb(exec_ctx, ctx->user_data, GRPC_JWT_VERIFIER_KEY_RETRIEVAL_ERROR,
+               NULL);
+  verifier_cb_ctx_destroy(exec_ctx, ctx);
   }
   jwks_uri += 8;
   req.handshaker = &grpc_httpcli_ssl;
   req.host = gpr_strdup(jwks_uri);
-  req.http.path = strchr(jwks_uri, '/');
+  req.http.path = strchr((char*)jwks_uri, '/');
   if (req.http.path == NULL) {
-    req.http.path = "";
+    req.http.path = (char*)"";
   } else {
     *(req.host + (req.http.path - jwks_uri)) = '\0';
   }
@@ -715,11 +731,11 @@ static void on_openid_config_retrieved(grpc_exec_ctx *exec_ctx, void *user_data,
   gpr_free(req.host);
   return;
 
-error:
-  if (json != NULL) grpc_json_destroy(json);
-  ctx->user_cb(exec_ctx, ctx->user_data, GRPC_JWT_VERIFIER_KEY_RETRIEVAL_ERROR,
-               NULL);
-  verifier_cb_ctx_destroy(exec_ctx, ctx);
+//error:
+//  if (json != NULL) grpc_json_destroy(json);
+//  ctx->user_cb(exec_ctx, ctx->user_data, GRPC_JWT_VERIFIER_KEY_RETRIEVAL_ERROR,
+//               NULL);
+//  verifier_cb_ctx_destroy(exec_ctx, ctx);
 }
 
 static email_key_mapping *verifier_get_mapping(grpc_jwt_verifier *v,
@@ -760,7 +776,7 @@ const char *grpc_jwt_issuer_email_domain(const char *issuer) {
   if (dot == NULL || dot == email_domain) return email_domain;
   GPR_ASSERT(dot > email_domain);
   /* There may be a subdomain, we just want the domain. */
-  dot = gpr_memrchr(email_domain, '.', (size_t)(dot - email_domain));
+  dot = (const char*)gpr_memrchr(email_domain, '.', (size_t)(dot - email_domain));
   if (dot == NULL) return email_domain;
   return dot + 1;
 }
@@ -781,11 +797,15 @@ static void retrieve_key_and_verify(grpc_exec_ctx *exec_ctx,
   iss = ctx->claims->iss;
   if (ctx->header->kid == NULL) {
     gpr_log(GPR_ERROR, "Missing kid in jose header.");
-    goto error;
+  ctx->user_cb(exec_ctx, ctx->user_data, GRPC_JWT_VERIFIER_KEY_RETRIEVAL_ERROR,
+               NULL);
+  verifier_cb_ctx_destroy(exec_ctx, ctx);
   }
   if (iss == NULL) {
     gpr_log(GPR_ERROR, "Missing iss in claims.");
-    goto error;
+  ctx->user_cb(exec_ctx, ctx->user_data, GRPC_JWT_VERIFIER_KEY_RETRIEVAL_ERROR,
+               NULL);
+  verifier_cb_ctx_destroy(exec_ctx, ctx);
   }
 
   /* This code relies on:
@@ -800,7 +820,9 @@ static void retrieve_key_and_verify(grpc_exec_ctx *exec_ctx,
     mapping = verifier_get_mapping(ctx->verifier, email_domain);
     if (mapping == NULL) {
       gpr_log(GPR_ERROR, "Missing mapping for issuer email.");
-      goto error;
+   ctx->user_cb(exec_ctx, ctx->user_data, GRPC_JWT_VERIFIER_KEY_RETRIEVAL_ERROR,
+               NULL);
+  verifier_cb_ctx_destroy(exec_ctx, ctx);
     }
     req.host = gpr_strdup(mapping->key_url_prefix);
     path_prefix = strchr(req.host, '/');
@@ -842,10 +864,10 @@ static void retrieve_key_and_verify(grpc_exec_ctx *exec_ctx,
   gpr_free(req.http.path);
   return;
 
-error:
-  ctx->user_cb(exec_ctx, ctx->user_data, GRPC_JWT_VERIFIER_KEY_RETRIEVAL_ERROR,
-               NULL);
-  verifier_cb_ctx_destroy(exec_ctx, ctx);
+//error:
+//  ctx->user_cb(exec_ctx, ctx->user_data, GRPC_JWT_VERIFIER_KEY_RETRIEVAL_ERROR,
+//               NULL);
+//  verifier_cb_ctx_destroy(exec_ctx, ctx);
 }
 
 void grpc_jwt_verifier_verify(grpc_exec_ctx *exec_ctx,
@@ -901,12 +923,12 @@ error:
 grpc_jwt_verifier *grpc_jwt_verifier_create(
     const grpc_jwt_verifier_email_domain_key_url_mapping *mappings,
     size_t num_mappings) {
-  grpc_jwt_verifier *v = gpr_zalloc(sizeof(grpc_jwt_verifier));
+  grpc_jwt_verifier *v = (grpc_jwt_verifier *)gpr_zalloc(sizeof(grpc_jwt_verifier));
   grpc_httpcli_context_init(&v->http_ctx);
 
   /* We know at least of one mapping. */
   v->allocated_mappings = 1 + num_mappings;
-  v->mappings = gpr_malloc(v->allocated_mappings * sizeof(email_key_mapping));
+  v->mappings = (email_key_mapping*)gpr_malloc(v->allocated_mappings * sizeof(email_key_mapping));
   verifier_put_mapping(v, GRPC_GOOGLE_SERVICE_ACCOUNTS_EMAIL_DOMAIN,
                        GRPC_GOOGLE_SERVICE_ACCOUNTS_KEY_URL_PREFIX);
   /* User-Provided mappings. */
