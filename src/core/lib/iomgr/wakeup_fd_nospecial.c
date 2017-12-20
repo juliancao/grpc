@@ -28,9 +28,11 @@
 #include <stddef.h>
 #include "src/core/lib/iomgr/wakeup_fd_posix.h"
 
-static int check_availability_invalid(void) { return 0; }
+int check_availability_invalid(void) { return 0; }
 
+#if 0
 const grpc_wakeup_fd_vtable grpc_specialized_wakeup_fd_vtable = {
     NULL, NULL, NULL, NULL, check_availability_invalid};
+#endif
 
 #endif /* GRPC_POSIX_NO_SPECIAL_WAKEUP_FD */

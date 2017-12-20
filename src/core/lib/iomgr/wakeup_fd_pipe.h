@@ -21,6 +21,11 @@
 
 #include "src/core/lib/iomgr/wakeup_fd_posix.h"
 
-extern grpc_wakeup_fd_vtable grpc_pipe_wakeup_fd_vtable;
+//extern grpc_wakeup_fd_vtable grpc_pipe_wakeup_fd_vtable;
+extern grpc_error* pipe_init(grpc_wakeup_fd* fd_info);
+extern grpc_error* pipe_consume(grpc_wakeup_fd* fd_info);
+extern grpc_error* pipe_wakeup(grpc_wakeup_fd* fd_info);
+extern void pipe_destroy(grpc_wakeup_fd* fd_info);
+extern int pipe_check_availability(void);
 
 #endif /* GRPC_CORE_LIB_IOMGR_WAKEUP_FD_PIPE_H */

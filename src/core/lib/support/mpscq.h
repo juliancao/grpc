@@ -19,6 +19,10 @@
 #ifndef GRPC_CORE_LIB_SUPPORT_MPSCQ_H
 #define GRPC_CORE_LIB_SUPPORT_MPSCQ_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <grpc/support/atm.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -49,5 +53,9 @@ void gpr_mpscq_push(gpr_mpscq *q, gpr_mpscq_node *n);
 gpr_mpscq_node *gpr_mpscq_pop(gpr_mpscq *q);
 // Pop a node; sets *empty to true if the queue is empty, or false if it is not
 gpr_mpscq_node *gpr_mpscq_pop_and_check_end(gpr_mpscq *q, bool *empty);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GRPC_CORE_LIB_SUPPORT_MPSCQ_H */

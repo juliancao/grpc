@@ -30,7 +30,7 @@
 
 #include "src/core/lib/iomgr/socket_utils_posix.h"
 
-static grpc_error* pipe_init(grpc_wakeup_fd* fd_info) {
+grpc_error* pipe_init(grpc_wakeup_fd* fd_info) {
   int pipefd[2];
   int r = pipe(pipefd);
   if (0 != r) {
@@ -47,7 +47,7 @@ static grpc_error* pipe_init(grpc_wakeup_fd* fd_info) {
   return GRPC_ERROR_NONE;
 }
 
-static grpc_error* pipe_consume(grpc_wakeup_fd* fd_info) {
+grpc_error* pipe_consume(grpc_wakeup_fd* fd_info) {
   char buf[128];
   ssize_t r;
 
@@ -66,19 +66,19 @@ static grpc_error* pipe_consume(grpc_wakeup_fd* fd_info) {
   }
 }
 
-static grpc_error* pipe_wakeup(grpc_wakeup_fd* fd_info) {
+grpc_error* pipe_wakeup(grpc_wakeup_fd* fd_info) {
   char c = 0;
   while (write(fd_info->write_fd, &c, 1) != 1 && errno == EINTR)
     ;
   return GRPC_ERROR_NONE;
 }
 
-static void pipe_destroy(grpc_wakeup_fd* fd_info) {
+void pipe_destroy(grpc_wakeup_fd* fd_info) {
   if (fd_info->read_fd != 0) close(fd_info->read_fd);
   if (fd_info->write_fd != 0) close(fd_info->write_fd);
 }
 
-static int pipe_check_availability(void) {
+int pipe_check_availability(void) {
   grpc_wakeup_fd fd;
   fd.read_fd = fd.write_fd = -1;
 
@@ -90,8 +90,10 @@ static int pipe_check_availability(void) {
   }
 }
 
+#if 0
 const grpc_wakeup_fd_vtable grpc_pipe_wakeup_fd_vtable = {
     pipe_init, pipe_consume, pipe_wakeup, pipe_destroy,
     pipe_check_availability};
+#endif
 
 #endif /* GPR_POSIX_WAKUP_FD */

@@ -29,7 +29,7 @@
 #include "src/core/lib/iomgr/wakeup_fd_posix.h"
 #include "src/core/lib/profiling/timers.h"
 
-static grpc_error* eventfd_create(grpc_wakeup_fd* fd_info) {
+grpc_error* eventfd_create(grpc_wakeup_fd* fd_info) {
   int efd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
   if (efd < 0) {
     return GRPC_OS_ERROR(errno, "eventfd");
@@ -39,7 +39,7 @@ static grpc_error* eventfd_create(grpc_wakeup_fd* fd_info) {
   return GRPC_ERROR_NONE;
 }
 
-static grpc_error* eventfd_consume(grpc_wakeup_fd* fd_info) {
+grpc_error* eventfd_consume(grpc_wakeup_fd* fd_info) {
   eventfd_t value;
   int err;
   do {
@@ -51,7 +51,7 @@ static grpc_error* eventfd_consume(grpc_wakeup_fd* fd_info) {
   return GRPC_ERROR_NONE;
 }
 
-static grpc_error* eventfd_wakeup(grpc_wakeup_fd* fd_info) {
+grpc_error* eventfd_wakeup(grpc_wakeup_fd* fd_info) {
   int err;
   GPR_TIMER_BEGIN("eventfd_wakeup", 0);
   do {
@@ -64,19 +64,21 @@ static grpc_error* eventfd_wakeup(grpc_wakeup_fd* fd_info) {
   return GRPC_ERROR_NONE;
 }
 
-static void eventfd_destroy(grpc_wakeup_fd* fd_info) {
+void eventfd_destroy(grpc_wakeup_fd* fd_info) {
   if (fd_info->read_fd != 0) close(fd_info->read_fd);
 }
 
-static int eventfd_check_availability(void) {
+int eventfd_check_availability(void) {
   const int efd = eventfd(0, 0);
   const int is_available = efd >= 0;
   if (is_available) close(efd);
   return is_available;
 }
 
+#if 0
 const grpc_wakeup_fd_vtable grpc_specialized_wakeup_fd_vtable = {
     eventfd_create, eventfd_consume, eventfd_wakeup, eventfd_destroy,
     eventfd_check_availability};
+#endif
 
 #endif /* GRPC_LINUX_EVENTFD */

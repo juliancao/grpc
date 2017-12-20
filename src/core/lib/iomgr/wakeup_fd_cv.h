@@ -62,4 +62,10 @@ typedef struct cv_fd_table {
   grpc_poll_function_type poll;
 } cv_fd_table;
 
+extern grpc_error* cv_fd_init(grpc_wakeup_fd* fd_info);
+extern grpc_error* cv_fd_wakeup(grpc_wakeup_fd* fd_info);
+extern grpc_error* cv_fd_consume(grpc_wakeup_fd* fd_info);
+extern void cv_fd_destroy(grpc_wakeup_fd* fd_info);
+extern int cv_check_availability(void);
+
 #endif /* GRPC_CORE_LIB_IOMGR_WAKEUP_FD_CV_H */

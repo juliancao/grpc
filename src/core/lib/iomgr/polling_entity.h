@@ -19,6 +19,10 @@
 #ifndef GRPC_CORE_LIB_IOMGR_POLLING_ENTITY_H
 #define GRPC_CORE_LIB_IOMGR_POLLING_ENTITY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "src/core/lib/iomgr/pollset.h"
 #include "src/core/lib/iomgr/pollset_set.h"
 
@@ -64,4 +68,8 @@ void grpc_polling_entity_add_to_pollset_set(grpc_exec_ctx *exec_ctx,
 void grpc_polling_entity_del_from_pollset_set(grpc_exec_ctx *exec_ctx,
                                               grpc_polling_entity *pollent,
                                               grpc_pollset_set *pss_dst);
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* GRPC_CORE_LIB_IOMGR_POLLING_ENTITY_H */

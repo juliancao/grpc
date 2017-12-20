@@ -19,6 +19,10 @@
 #ifndef GRPC_CORE_LIB_IOMGR_EXEC_CTX_H
 #define GRPC_CORE_LIB_IOMGR_EXEC_CTX_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <grpc/support/cpu.h>
 #include "src/core/lib/iomgr/closure.h"
 
@@ -105,5 +109,9 @@ void grpc_exec_ctx_global_init(void);
 
 void grpc_exec_ctx_global_init(void);
 void grpc_exec_ctx_global_shutdown(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GRPC_CORE_LIB_IOMGR_EXEC_CTX_H */

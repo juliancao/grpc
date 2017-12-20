@@ -25,17 +25,18 @@ extern "C" {
 
 void gpr_timers_global_init(void);
 void gpr_timers_global_destroy(void);
+void gpr_timers_set_log_filename(const char *filename);
+void gpr_timer_set_enabled(int enabled);
 
+#ifdef GRPC_BASIC_PROFILER
 void gpr_timer_add_mark(const char *tagstr, int important, const char *file,
                         int line);
 void gpr_timer_begin(const char *tagstr, int important, const char *file,
                      int line);
 void gpr_timer_end(const char *tagstr, int important, const char *file,
                    int line);
+#endif
 
-void gpr_timers_set_log_filename(const char *filename);
-
-void gpr_timer_set_enabled(int enabled);
 
 #if !(defined(GRPC_STAP_PROFILER) + defined(GRPC_BASIC_PROFILER) + \
       defined(GRPC_CUSTOM_PROFILER))

@@ -36,7 +36,8 @@
 
 extern cv_fd_table g_cvfds;
 
-static grpc_error* cv_fd_init(grpc_wakeup_fd* fd_info) {
+
+grpc_error* cv_fd_init(grpc_wakeup_fd* fd_info) {
   unsigned int i, newsize;
   int idx;
   gpr_mu_lock(&g_cvfds.mu);
@@ -63,7 +64,7 @@ static grpc_error* cv_fd_init(grpc_wakeup_fd* fd_info) {
   return GRPC_ERROR_NONE;
 }
 
-static grpc_error* cv_fd_wakeup(grpc_wakeup_fd* fd_info) {
+grpc_error* cv_fd_wakeup(grpc_wakeup_fd* fd_info) {
   cv_node* cvn;
   gpr_mu_lock(&g_cvfds.mu);
   g_cvfds.cvfds[GRPC_FD_TO_IDX(fd_info->read_fd)].is_set = 1;
@@ -76,14 +77,14 @@ static grpc_error* cv_fd_wakeup(grpc_wakeup_fd* fd_info) {
   return GRPC_ERROR_NONE;
 }
 
-static grpc_error* cv_fd_consume(grpc_wakeup_fd* fd_info) {
+grpc_error* cv_fd_consume(grpc_wakeup_fd* fd_info) {
   gpr_mu_lock(&g_cvfds.mu);
   g_cvfds.cvfds[GRPC_FD_TO_IDX(fd_info->read_fd)].is_set = 0;
   gpr_mu_unlock(&g_cvfds.mu);
   return GRPC_ERROR_NONE;
 }
 
-static void cv_fd_destroy(grpc_wakeup_fd* fd_info) {
+void cv_fd_destroy(grpc_wakeup_fd* fd_info) {
   if (fd_info->read_fd == 0) {
     return;
   }
@@ -95,10 +96,11 @@ static void cv_fd_destroy(grpc_wakeup_fd* fd_info) {
   gpr_mu_unlock(&g_cvfds.mu);
 }
 
-static int cv_check_availability(void) { return 1; }
+int cv_check_availability(void) { return 1; }
 
+#if 0
 const grpc_wakeup_fd_vtable grpc_cv_wakeup_fd_vtable = {
     cv_fd_init, cv_fd_consume, cv_fd_wakeup, cv_fd_destroy,
     cv_check_availability};
-
+#endif
 #endif /* GRPC_POSIX_WAKUP_FD */
